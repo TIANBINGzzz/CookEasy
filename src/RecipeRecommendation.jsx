@@ -222,7 +222,7 @@ const RecipeRecommendation = () => {
 
     return (
         <div className="deepseek-container">
-            <h2 className="deepseek-title">余味厨房</h2>
+            <h2 className="deepseek-title">吃什么</h2>
             <form onSubmit={handleSubmit} className="deepseek-form">
                 <input
                     type="text"
