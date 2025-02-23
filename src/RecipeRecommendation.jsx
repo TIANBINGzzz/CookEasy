@@ -16,6 +16,67 @@ const RecipeRecommendation = () => {
     const answerStartedRef = useRef(false);
     const answerBufferRef = useRef('');
 
+    // record the audio
+    const [isRecording, setIsRecording] = useState(false);
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
+
+
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorderRef.current = new MediaRecorder(stream);
+
+            mediaRecorderRef.current.ondataavailable = (e) => {
+                audioChunksRef.current.push(e.data);
+            };
+
+            mediaRecorderRef.current.onstop = async () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+                await sendAudioToServer(audioBlob);
+                audioChunksRef.current = [];
+            };
+
+            mediaRecorderRef.current.start();
+            setIsRecording(true);
+        } catch (err) {
+            console.error('麦克风访问失败:', err);
+            alert('无法访问麦克风，请检查权限设置');
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            // 关闭媒体流
+            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+        }
+    };
+
+    const sendAudioToServer = async (audioBlob) => {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.wav');
+
+        try {
+            const response = await fetch('http://127.0.0.1:5001/speech', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            if (data.text) {
+                const currentPrompt = data.text.trim();
+                setPrompt(currentPrompt);
+                submitForm(currentPrompt);
+            }
+        } catch (error) {
+            console.error('语音识别失败:', error);
+            alert('语音识别服务暂时不可用');
+        }
+    };
+
     // SSE 数据处理函数
     const processSSEBuffer = (buffer) => {
         let events = [];
@@ -34,8 +95,25 @@ const RecipeRecommendation = () => {
         return { events, buffer };
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
+        submitForm();
+    };
+
+    const submitForm = async (externalPrompt) => {
+
+        let finalPrompt = externalPrompt;
+
+        // 如果没有传入参数，则从状态中获取最新值
+        if (finalPrompt === undefined) {
+            finalPrompt = await new Promise(resolve => {
+                setPrompt(prev => {
+                    resolve(prev);
+                    return prev;
+                });
+            });
+        }
+
         setThinking('');
         setRecipes([]);
         setHasAnswerStarted(false);
@@ -45,10 +123,10 @@ const RecipeRecommendation = () => {
         let sseBuffer = '';
 
         try {
-            const response = await fetch('http://localhost:8080/generate', {
+            const response = await fetch('http://service2.patricklocation.fun/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt })
+                body: JSON.stringify({ prompt: finalPrompt })
             });
             if (!response.body) {
                 console.error('响应中没有 body');
@@ -224,13 +302,22 @@ const RecipeRecommendation = () => {
         <div className="deepseek-container">
             <h2 className="deepseek-title">吃什么</h2>
             <form onSubmit={handleSubmit} className="deepseek-form">
-                <input
-                    type="text"
-                    placeholder="请输入内容..."
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    className="deepseek-input"
-                />
+                <div className="input-container">
+                    <input
+                        type="text"
+                        placeholder="请输入内容..."
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        className="deepseek-input"
+                    />
+                    <button
+                        type="button"
+                        className={`mic-button ${isRecording ? 'recording' : ''}`}
+                        onClick={isRecording ? stopRecording : startRecording}
+                    >
+                        {isRecording ? '⏹' : '🎤'}
+                    </button>
+                </div>
                 <button type="submit" className="deepseek-button">提问</button>
             </form>
             <div className="deepseek-display">
@@ -261,7 +348,7 @@ const RecipeRecommendation = () => {
                 .deepseek-input {
                     flex: 1;
                     max-width: 500px;
-                    padding: 12px;
+                    padding: 12px 45px 12px 15px; 
                     border: 1px solid #e0a899; /* 温暖的浅棕色 */
                     border-radius: 8px;
                     font-size: 16px;
@@ -371,6 +458,47 @@ const RecipeRecommendation = () => {
                     0% { transform: scale(1); opacity: 1; }
                     50% { transform: scale(1.05); opacity: 0.7; }
                     100% { transform: scale(1); opacity: 1; }
+                }
+
+                .input-container {
+                    position: relative;
+                    flex: 1;
+                    max-width: 500px;
+                    margin-right: 10px;
+                }
+                
+                /* 麦克风按钮样式 */
+                .mic-button {
+                    position: absolute;
+                    right: 10px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    background: none;
+                    border: none;
+                    font-size: 1.2em;
+                    cursor: pointer;
+                    transition: transform 0.2s;
+                }
+                
+                .mic-button:hover {
+                    transform: translateY(-50%) scale(1.1);
+                }
+                
+                .mic-button.recording {
+                    color: #ff0000;
+                    animation: pulse 1s infinite;
+                }
+                
+                @keyframes pulse {
+                    0% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                    100% { opacity: 1; }
+                }
+                
+                /* 调整输入框宽度 */
+                .deepseek-input {
+                    width: 90%;
+                    padding-right: 40px;
                 }
             `}</style>
         </div>
