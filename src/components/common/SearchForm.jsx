@@ -4,6 +4,7 @@ const SearchForm = ({
     prompt,
     setPrompt,
     isRecording,
+    isRecognizing,
     onStartRecording,
     onStopRecording,
     onSubmit
@@ -40,7 +41,7 @@ const SearchForm = ({
                     </span>
                 ))}
             </div>
-            <form onSubmit={handleSubmit} className="deepseek-form">
+            <form onSubmit={handleSubmit} className={`deepseek-form ${(isRecording || isRecognizing) ? 'recording-mode' : ''}`}>
                 <div className="input-container">
                     <input
                         type="text"
@@ -49,20 +50,32 @@ const SearchForm = ({
                         onChange={(e) => setPrompt(e.target.value)}
                         className="deepseek-input"
                     />
-                    <button
-                        type="button"
-                        className={`mic-button ${isRecording ? 'recording' : ''}`}
-                        onClick={isRecording ? onStopRecording : onStartRecording}
-                        title={isRecording ? '点击停止录音' : '点击开始语音输入'}
-                    >
-                        {isRecording ? '⏹' : '🎙️'}
-                    </button>
-                    {isRecording && (
-                        <div className="mic-status">正在录音...</div>
+                    {!isRecording && !isRecognizing && (
+                        <button
+                            type="button"
+                            className="mic-button"
+                            onClick={onStartRecording}
+                            title="点击开始语音输入"
+                        >
+                            🎙️
+                        </button>
                     )}
                 </div>
-                <button type="submit" className="deepseek-button">开始推荐</button>
+                {!isRecording && !isRecognizing && (
+                    <button type="submit" className="deepseek-button">开始推荐</button>
+                )}
             </form>
+            {(isRecording || isRecognizing) && (
+                <div className="voice-animation-container" onClick={isRecording ? onStopRecording : null}>
+                    <div className={`voice-animation ${isRecognizing ? 'recognizing' : ''}`}>
+                        <div className="voice-wave"></div>
+                        <div className="voice-icon">{isRecognizing ? '🔍' : '🎙️'}</div>
+                    </div>
+                    <p className="voice-status">
+                        {isRecognizing ? '正在识别语音...' : '点击停止录音'}
+                    </p>
+                </div>
+            )}
         </>
     );
 };

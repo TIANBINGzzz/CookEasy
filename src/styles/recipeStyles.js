@@ -63,11 +63,14 @@ const styles = `
         margin-left: auto;
         margin-right: auto;
         width: 100%;
+        align-items: center;
     }
 
     .input-container {
         position: relative;
         width: 100%;
+        max-width: 550px;
+        margin: 0 auto;
     }
 
     .deepseek-input {
@@ -272,6 +275,98 @@ const styles = `
         .input-container {
             max-width: 100%;
         }
+    }
+
+    .voice-animation-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 2rem 0;
+    }
+
+    .voice-animation {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .voice-wave {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: rgba(255, 0, 0, 0.1);
+        animation: wave 2s infinite;
+    }
+
+    .voice-icon {
+        font-size: 2.5rem;
+        z-index: 1;
+        animation: pulse 1s infinite;
+    }
+
+    .voice-status {
+        margin-top: 1rem;
+        color: #ff0000;
+        font-size: 1rem;
+        animation: blink 1.5s infinite;
+    }
+
+    @keyframes wave {
+        0% {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+        50% {
+            transform: scale(1.1);
+            opacity: 0.3;
+        }
+        100% {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    @keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    /* 当正在识别语音时的样式 */
+    .voice-animation.recognizing .voice-wave {
+        background: rgba(0, 128, 255, 0.1);
+        animation: wave 1.5s infinite;
+    }
+
+    .voice-animation.recognizing .voice-status {
+        color: #0080ff;
+    }
+
+    /* 当正在录音时的样式 */
+    .recording-mode {
+        padding: 0 !important;
+    }
+    
+    .recording-mode .input-container {
+        max-width: 450px;
+        transition: max-width 0.3s ease;
+        margin: 0 auto;
     }
 `;
 

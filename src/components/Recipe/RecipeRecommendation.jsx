@@ -18,6 +18,7 @@ const RecipeRecommendation = () => {
 
     const {
         isRecording,
+        isRecognizing,
         startRecording,
         stopRecording
     } = useAudioRecorder({ setPrompt, onRecognitionComplete: handleSearch });
@@ -54,6 +55,7 @@ const RecipeRecommendation = () => {
                 prompt={prompt}
                 setPrompt={setPrompt}
                 isRecording={isRecording}
+                isRecognizing={isRecognizing}
                 onStartRecording={startRecording}
                 onStopRecording={stopRecording}
                 onSubmit={handleSearch}

@@ -3,6 +3,7 @@ import { API_ENDPOINTS } from '../config/constants';
 
 export const useAudioRecorder = ({ setPrompt, onRecognitionComplete }) => {
     const [isRecording, setIsRecording] = useState(false);
+    const [isRecognizing, setIsRecognizing] = useState(false);
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
 
@@ -16,9 +17,11 @@ export const useAudioRecorder = ({ setPrompt, onRecognitionComplete }) => {
             };
 
             mediaRecorderRef.current.onstop = async () => {
+                setIsRecognizing(true);
                 const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
                 await sendAudioToServer(audioBlob);
                 audioChunksRef.current = [];
+                setIsRecognizing(false);
             };
 
             mediaRecorderRef.current.start();
@@ -61,6 +64,7 @@ export const useAudioRecorder = ({ setPrompt, onRecognitionComplete }) => {
 
     return {
         isRecording,
+        isRecognizing,
         startRecording,
         stopRecording
     };
