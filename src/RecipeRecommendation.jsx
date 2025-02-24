@@ -123,7 +123,7 @@ const RecipeRecommendation = () => {
         let sseBuffer = '';
 
         try {
-            const response = await fetch('http://service2.patricklocation.fun/generate', {
+            const response = await fetch('https://service2.patricklocation.fun/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: finalPrompt })
